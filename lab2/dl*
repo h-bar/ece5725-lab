@@ -1,0 +1,22 @@
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name                       Version             Architecture Description
++++-==========================-===================-============-=================================================================
+un  libsdl-1.3-0               <none>              <none>       (no description available)
+ii  libsdl-image1.2:armhf      1.2.12-10+deb10u1   armhf        Image loading library for Simple DirectMedia Layer 1.2, libraries
+ii  libsdl-mixer1.2:armhf      1.2.12-15           armhf        Mixer library for Simple DirectMedia Layer 1.2, libraries
+ii  libsdl-ttf2.0-0:armhf      2.0.11-6            armhf        TrueType Font library for Simple DirectMedia Layer 1.2, libraries
+un  libsdl1.2                  <none>              <none>       (no description available)
+un  libsdl1.2-all              <none>              <none>       (no description available)
+un  libsdl1.2-esd              <none>              <none>       (no description available)
+un  libsdl1.2-nas              <none>              <none>       (no description available)
+un  libsdl1.2-oss              <none>              <none>       (no description available)
+ii  libsdl1.2debian:armhf      1.2.15+dfsg2-4+rpt2 armhf        Simple DirectMedia Layer
+un  libsdl1.2debian-all        <none>              <none>       (no description available)
+un  libsdl1.2debian-alsa       <none>              <none>       (no description available)
+un  libsdl1.2debian-esd        <none>              <none>       (no description available)
+un  libsdl1.2debian-nas        <none>              <none>       (no description available)
+un  libsdl1.2debian-oss        <none>              <none>       (no description available)
+un  libsdl1.2debian-pulseaudio <none>              <none>       (no description available)
+ii  libsdl2-2.0-0:armhf        2.0.9+dfsg1-1+rpt1  armhf        Simple DirectMedia Layer
