@@ -32,7 +32,7 @@ BLACK = 0,0,0
 screen = pygame.display.set_mode((320, 240))
 my_font= pygame.font.Font(None, 50)
 #my_buttons= { 'Start':(80,180), 'Quit':(240,180)}
-my_buttons = {'Quit':(280,200)}
+my_buttons = {'Quit':(140,200)}
 
 pos_font = pygame.font.Font(None, 30)
 pos_pos = (160, 100)
@@ -63,19 +63,21 @@ while run:
         elif(event.type is MOUSEBUTTONUP):
             pos = pygame.mouse.get_pos()
             x,y = pos
-            if y > 180:  # Lower than a certain y
-                if x < 160 and x>120: # Quit button x range
+            if y > 150:  # Lower than a certain y
+                if x > 130 and x<170: # Quit button x range
                     print "Quit Button Pressed"
 		    run = False
-            else:
-                print ("Touch at ",x , y)
-		for my_text, text_pos in my_buttons.items():
-                    text_surface = my_font.render(my_text, True, WHITE)
-                    rect = text_surface.get_rect(center=text_pos)
-                    screen.blit(text_surface, rect)
+                else:
+                    print ("Touch at ",x , y)
+		    screen.fill(BLACK)               # Erase the Work space
 
-                    text_surface = pos_font.render("Touch at " + str(pos), True, WHITE)
-                    rect = text_surface.get_rect(center=pos_pos)
+		    for my_text, text_pos in my_buttons.items():
+                        text_surface = my_font.render(my_text, True, WHITE)
+                        rect = text_surface.get_rect(center=text_pos)
+                        screen.blit(text_surface, rect)
+
+                        text_surface = pos_font.render("Touch at " + str(pos), True, WHITE)
+                        rect = text_surface.get_rect(center=pos_pos)
 
                     screen.blit(text_surface, rect)
                     pygame.display.flip()
