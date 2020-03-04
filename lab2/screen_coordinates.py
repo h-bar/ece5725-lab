@@ -1,3 +1,4 @@
+# wsn8, yz2626, this program works
 import pygame
 from pygame.locals import *   # for event MOUSE variables
 import os
@@ -25,7 +26,7 @@ def GPIO17_callback(channel):
 		exit()
 
 pygame.init()
-#pygame.mouse.set_visible(False)
+pygame.mouse.set_visible(False)
 
 WHITE = 255, 255, 255
 BLACK = 0,0,0
@@ -54,7 +55,7 @@ run = True
 # Timeout protocol
 startTime = time.time()
 while run:
-    if (time.time()-startTime) >= 30: # Time out at 10 seconds
+    if (time.time()-startTime) >= 10: # Time out at 10 seconds
         print "The program has timed-out"
         run = False
     for event in pygame.event.get():
@@ -63,7 +64,7 @@ while run:
         elif(event.type is MOUSEBUTTONUP):
             pos = pygame.mouse.get_pos()
             x,y = pos
-            if y > 150:  # Lower than a certain y
+            if y > 160:  # Lower than a certain y
                 if x > 130 and x<170: # Quit button x range
                     print "Quit Button Pressed"
 		    run = False
@@ -81,4 +82,19 @@ while run:
 
                     screen.blit(text_surface, rect)
                     pygame.display.flip()
- 
+	    else:
+	         print ("Touch at ",x , y)
+                 screen.fill(BLACK)               # Erase the Work space
+
+                 for my_text, text_pos in my_buttons.items():
+                     text_surface = my_font.render(my_text, True, WHITE)
+                     rect = text_surface.get_rect(center=text_pos)
+                     screen.blit(text_surface, rect)
+
+                     text_surface = pos_font.render("Touch at " + str(pos), True, WHITE)
+                     rect = text_surface.get_rect(center=pos_pos)
+
+                 screen.blit(text_surface, rect)
+                 pygame.display.flip()
+
+
