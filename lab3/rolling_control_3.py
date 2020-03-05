@@ -57,7 +57,7 @@ for my_text, text_pos in my_buttons.items():
     text_surface = my_font.render(my_text, True, WHITE)
     rect = text_surface.get_rect(center=text_pos)
     #draw a circle
-    stopcircle = pygame.draw.circle(screen,(1,0,0,[a=255]), (circlex, circley),radius, 0)
+    pygame.draw.circle(screen,(1,0,0), (circlex, circley),radius, 0)
     screen.blit(text_surface, rect)
     pygame.display.flip()
 

@@ -1,166 +1,99 @@
-# William Nunez, Yan Zhang, wsn8, yz2626, wed, 3/4/2020
-import pygame     # Import pygame graphics library
-import os    # for OS calls
-import time
-from pygame.locals import *   # for event MOUSE variables
+# Quit Button Setup
+from signal import signal, SIGINT
+from sys import exit
 
 import RPi.GPIO as GPIO
-import time
-import subprocess # For interrupt
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-def GPIO17_callback(channel):
-    print "Falling edge detected on button 17"
+
+quit_button = 17
+GPIO.setup(quit_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+def _quit():
     GPIO.cleanup()
     exit(0)
-GPIO.add_event_detect(17, GPIO.FALLING, callback=GPIO17_callback, bouncetime=300)
+
+def quit_cb(channel):
+    _quit()
+
+def quit_sig(signal_received, frame):
+    _quit()
+
+# GPIO.add_event_detect(quit_button, GPIO.FALLING, callback=quit_cb, bouncetime=300)
+signal(SIGINT, quit_sig)
 
 
-os.putenv('SDL_VIDEODRIVER', 'fbcon')   # Display on piTFT#   
-os.putenv('SDL_FBDEV', '/dev/fb1')     
-os.putenv('SDL_MOUSEDRV', 'TSLIB')     # Track mouse clicks on piTFT
-os.putenv('SDL_MOUSEDEV', '/dev/input/touchscreen')
+# Actual code starts from here
+import time
+import sys
 
-pygame.init()
-pygame.mouse.set_visible(False)
+interval = 0.02
 
-WHITE = 255, 255, 255
-BLACK = 0,0,0
-screen = pygame.display.set_mode((320, 240))
-l1_font= pygame.font.Font(None, 50)
-l1_buttons= { 
-    'STOP':(170,120),  # Position of stop button
-    'QUIT':(240,180)   # position of quit button
-}
-
-#l2_font = pygame.font.Font(None, 25)
-#l2_buttons = {
-#    'pause': (40, 200),
-#    'Fast': (120,200),
-#    'Slow': (200, 200),
-#    'Back': (280, 200)
-#}
-
-pos_font = pygame.font.Font(None, 30)
-pos_pos = (160, 100)
-
-size = width, height = 320, 240 
-black = 0, 0, 0
-screen = pygame.display.set_mode(size)
-#ball = pygame.image.load("magic_ball.png")
+motor_stop = 0.0015
+motor_r_max = 0.0017
+motor_f_max = 0.0013
 
 
-#balls = [pygame.transform.scale(ball, (60, 60)), pygame.transform.scale(ball, (4
-#speeds = [[2,2], [4, 4]]
-#ballrects = []
+def initMotor(pwm_pin):
+    GPIO.setup(pwm_pin, GPIO.OUT)
+    motor = GPIO.PWM(pwm_pin, 60)
+    startMotor(motor)
+    setPMotor(motor, motor_stop)
 
-#for a_ball in balls:
-#  ballrects.append(a_ball.get_rect())
+    return motor
 
-for my_text, text_pos in l1_buttons.items():    
-    text_surface = l1_font.render(my_text, True, WHITE)    
-    rect = text_surface.get_rect(center=text_pos)
-    screen.blit(text_surface, rect)
-    pygame.display.flip()
-
-
-playback = False
-pause = False
-level1 = True
-step = 5
-while True:
-    for event in pygame.event.get():
-        if(event.type is MOUSEBUTTONDOWN):
-            pos = pygame.mouse.get_pos()
-        elif(event.type is MOUSEBUTTONUP):           
-            pos = pygame.mouse.get_pos() 
-            x,y = pos
-            if level1:
-                if y > 120:                
-                    if x < 160:
-                        print "start button pressed"
-                        playback = True
-                        level1 = False
-                    else:
-                        print "quit button pressed"
-                        exit(0)
-            else:
-                if y > 160:
-                    if x < 80:
-                        print "pause button pressed"
-                        pause = not pause
-                    elif x < 160:
-                        print "fast button pressed"
-                        speeds[0][0] += step
-                        speeds[0][1] += step
-                        speeds[1][0] += step
-                        speeds[1][0] += step
-                    elif x < 240: 
-                        print "slow button pressed"
-                        speeds[0][0] -= step
-                        speeds[0][1] -= step
-                        speeds[1][0] -= step
-                        speeds[1][0] -= step
-                    else:
-                        print "back button pressed"
-                        playback = False
-                        level1= True
-            
-            screen.fill(black)
-            
-            if level1:
-                for my_text, text_pos in l1_buttons.items():    
-                    text_surface = l1_font.render(my_text, True, WHITE)    
-                    rect = text_surface.get_rect(center=text_pos)
-                    screen.blit(text_surface, rect)
-            
-                text_surface = pos_font.render("touch at " + str(pos), True, WHITE)    
-                rect = text_surface.get_rect(center=pos_pos)
-            
-                screen.blit(text_surface, rect)
-            else:
-                for my_text, text_pos in l2_buttons.items(): 
-                    text_surface = l2_font.render(my_text, True, WHITE)    
-                    rect = text_surface.get_rect(center=text_pos)
-                    screen.blit(text_surface, rect)
+def setMotor(pwm, high, low):
+    f = 1 / (high + low)
+    pw = high
+    dc = high / (high + low) * 100
+    print "Setting Motor -> F: {}\tPW: {}\tDC: {}".format(f, pw, dc)  
     
-            pygame.display.flip()
+    pwm.ChangeFrequency(f)
+    pwm.ChangeDutyCycle(dc)
+
+def setPMotor(pwm, high):
+    setMotor(pwm, high, interval)
+
+def startMotor(pwm):
+    pwm.ChangeFrequency(1 / interval)
+    pwm.start(motor_stop / (motor_stop + interval) * 100)
+
+def cmdMotor(pwm, cmd):
+    if cmd == 'f':
+        setPMotor(pwm, motor_f_max)
+    elif cmd == 'r':
+        setPMotor(pwm, motor_r_max)
+    elif cmd == 'i':
+        setPMotor(pwm, motor_stop)
 
 
-    if playback == True:
-	time.sleep(0.02)
-       
-        screen.fill(black) 
-	for i in range(len(balls)):
-	    if pause == False:
-                ballrects[i] = ballrects[i].move(speeds[i])
-    
-                if ballrects[i].left < 0 or ballrects[i].right > width:
-                    speeds[i][0] = -speeds[i][0]
-	        if ballrects[i].top < 0 or ballrects[i].bottom > height:
-		    speeds[i][1] = -speeds[i][1]
+if len(sys.argv) > 1:
+    frequency = int(sys.argv[1])
 
-                for j in range(len(balls)):
-	            if i == j:
-		        continue
-		    if not ballrects[i].colliderect(ballrects[j]):
-		        continue
-		
-                    if ballrects[i].left < ballrects[j].left and ballrects[i].right >= ballrects[j].left and speeds[i][0] > 0:
-		        speeds[i][0] = -speeds[i][0]
-		    if ballrects[i].right > ballrects[j].right and ballrects[i].left <= ballrects[j].right and speeds[i][0] < 0:
-		        speeds[i][0] = -speeds[i][0]
 
-                    if ballrects[i].top < ballrects[j].top and ballrects[i].bottom >= ballrects[j].top and speeds[i][1] > 0:
-		        speeds[i][1] = -speeds[i][1]
-		    if ballrects[i].bottom > ballrects[j].bottom and ballrects[i].top <= ballrects[j].bottom and speeds[i][1] < 0:
-		        speeds[i][1] = -speeds[i][1]
-	
-            screen.blit(balls[i], ballrects[i])   # Combine Ball surface with workspace surface
-	
-        for my_text, text_pos in l2_buttons.items():    
-            text_surface = l2_font.render(my_text, True, WHITE)    
-            rect = text_surface.get_rect(center=text_pos)
-            screen.blit(text_surface, rect)
-       	  	
-	pygame.display.flip()   
+l_motor = initMotor(5)
+r_motor = initMotor(6)
+
+def button_cb(channel):
+    if channel == 17:
+        cmdMotor(l_motor, 'f')
+    elif channel == 22:
+        cmdMotor(l_motor, 'i')
+    elif channel == 23:
+        cmdMotor(l_motor, 'r')
+    elif channel == 27:
+        cmdMotor(r_motor, 'f')
+    elif channel == 19:
+        cmdMotor(r_motor, 'i')
+    elif channel == 26:
+        cmdMotor(r_motor, 'r')
+
+for pin in [17, 22, 23, 27, 19, 26]:
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_cb, bouncetime=300)
+
+
+raw_input()
+
+l_motor.stop()
+r_motor.stop()
+_quit()
