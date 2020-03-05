@@ -92,7 +92,43 @@ for pin in [17, 22, 23, 27, 19, 26]:
     GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_cb, bouncetime=300)
 
 
-raw_input()
+import pygame
+from pygame.locals import *
+
+os.putenv('SDL_VIDEODRIVER', 'fbcon')   # Display on piTFT#   
+os.putenv('SDL_FBDEV', '/dev/fb1')     
+os.putenv('SDL_MOUSEDRV', 'TSLIB')     # Track mouse clicks on piTFT
+os.putenv('SDL_MOUSEDEV', '/dev/input/touchscreen')
+
+pygame.init()
+pygame.mouse.set_visible(False)
+
+WHITE = 255, 255, 255
+BLACK = 0,0,0
+RED = 255, 0, 0
+
+screen = pygame.display.set_mode((320, 240))
+
+banner_font = pygame.font.Font(None, 30)
+banners = [
+    {
+        'text': 'Left History',
+        'pos': (20, 20)
+    }
+    {
+        'text': 'Right History',
+        'pos': (40, 40)
+    }
+]
+
+while True:
+    screen.fill(black)
+    for b in banners:    
+        text_surface = banner_font.render(b.text, True, WHITE)    
+        rect = text_surface.get_rect(left=text_pos)
+        screen.blit(text_surface, rect)
+    pygame.display.flip()
+# raw_input()
 
 l_motor.stop()
 r_motor.stop()

@@ -39,6 +39,17 @@ circlex = stopx
 circley = stopy
 radius = 20
 
+#Left Motor
+l1x = 20
+l1y = 50
+l2x = 20
+l2y = 100
+l3x = 20
+l3y = 150
+
+#Right Motor
+
+
 WHITE = 255, 255, 255
 BLACK = 0,0,0
 screen = pygame.display.set_mode((320, 240))
@@ -47,11 +58,14 @@ my_buttons= { 'QUIT':(quitx,quity), 'STOP':(stopx,stopy)}
 #my_buttons = {'Quit':(140,200)}
 
 
-Lmotor_font = pygame.font.Font(None, 30)
-pos_pos = (160, 100)
+motor_font = pygame.font.Font(None, 20)
+L_pos = (160, 100)
+L_history = {'Left History':(20, 10), 'Right History':(20,300)}
 
 
 screen.fill(BLACK)               # Erase the Work space     
+
+pygame.draw.circle(screen, (1,0,0), (circlex,circley), radius,0)
 
 for my_text, text_pos in my_buttons.items():    
     text_surface = my_font.render(my_text, True, WHITE)
@@ -81,7 +95,13 @@ while run:
             if y > (circley-radius) and y < (circley+radius):  # within y
                 if x > (circlex-radius) and x< (circlex+radius): # stop button x range
                     print "Stop Button Pressed"
-		    run = False
+                    #Kill motors
+		    
+            if y > (quitx-radius) and y < (quity+radius):  # within y
+                if x > (quitx-radius) and x< (quity+radius): # stop button x range
+                    print "Quit Button Pressed"
+                    run = False
+                    #kill the motors
 
                     #kill the motors
                 #else:
