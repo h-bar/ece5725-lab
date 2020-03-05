@@ -30,4 +30,5 @@ blink.start(dc)
 
 raw_input("Hit Enter to quit\n")
 
+blink.stop()
 quit_cb(quit_button)
