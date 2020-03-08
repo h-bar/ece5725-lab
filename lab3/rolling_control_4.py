@@ -1,3 +1,4 @@
+# Will Nunez, Yan Zhang, wsn8, yz2626, wed, 3/3/2020
 # Quit Button Setup
 from signal import signal, SIGINT
 from sys import exit
@@ -27,7 +28,6 @@ import time
 import sys
 import pygame
 from pygame.locals import *
-import os
 
 os.putenv('SDL_VIDEODRIVER', 'fbcon')   # Display on piTFT#   
 os.putenv('SDL_FBDEV', '/dev/fb1')     
@@ -76,13 +76,12 @@ def cmdMotor(pwm, cmd):
 WHITE = 255, 255, 255
 BLACK = 0,0,0
 RED = 255, 0, 0
-GREEN = 0, 255, 0
 
 pygame.init()
-pygame.mouse.set_visible(False)
+# pygame.mouse.set_visible(False)
 
 screen = pygame.display.set_mode((320, 240))
-updated = True
+
 labels = [
         {
         'text': 'Quit',
@@ -102,7 +101,7 @@ labels = [
     {
         'text': 'STOP',
         'pos': (160, 130),
-        'font': pygame.font.Font(None, 30)
+        'font': pygame.font.Font(None, 40)
     }
 ]
 
@@ -117,67 +116,32 @@ stopCircle = {
 l_history = ['', '', '']
 r_history = ['', '', '']
 
-s_stoped = False
-last_l = 'i'
-last_r = 'i'
-
 l_motor = initMotor(5)
 r_motor = initMotor(6)
 
 start_time = 0
 
 def button_cb(channel):
-    global last_l
-    global last_r
-    global s_stoped
-    global updated
-    global l_history
-    global r_history
-    global stopCircle
-    global labels
-
     log_time = time.time() - start_time
     if channel == 17:
         log_event(l_history, 'Clk', log_time)
-        last_l = 'f'
         cmdMotor(l_motor, 'f')
     elif channel == 22:
-        log_event(l_history, 'Stop', log_time) 
-        last_l = 'i'
+        log_event(l_history, 'Stop', log_time)
         cmdMotor(l_motor, 'i')
     elif channel == 23:
-        log_event(l_history, 'Counter-Clk', log_time) 
-        last_l = 'r'
+        log_event(l_history, 'Counter-Clk', log_time)
         cmdMotor(l_motor, 'r')
     elif channel == 27:
-        log_event(r_history, 'Clk', log_time) 
-        last_r = 'f'
+        log_event(r_history, 'Clk', log_time)
         cmdMotor(r_motor, 'f')
     elif channel == 19:
-        log_event(r_history, 'Stop', log_time) 
-        last_r = 'i'
+        log_event(r_history, 'Stop', log_time)
         cmdMotor(r_motor, 'i')
     elif channel == 26:
-        log_event(r_history, 'Counter-Clk', log_time) 
-        last_r = 'r'
+        log_event(r_history, 'Counter-Clk', log_time)
         cmdMotor(r_motor, 'r')
-    elif channel == 100:
-        log_event(l_history, 'S Stop', log_time)
-        log_event(r_history, 'S Stop', log_time)
-        if s_stoped:
-            cmdMotor(l_motor, last_l)
-            cmdMotor(r_motor, last_r)
-            s_stoped = False
-            labels[-1]['text'] = 'STOP'
-            stopCircle['color'] = RED
-        else:
-            setPMotor(l_motor, 0)
-            setPMotor(r_motor, 0)
-            s_stoped = True
-            labels[-1]['text'] = 'RESUME'
-            stopCircle['color'] = GREEN
-    
-    updated = True
+    update_screen()
 
 def gen_history_label(side, history):
     pos_x = 60 if side == 'l' else 260
@@ -221,36 +185,35 @@ def update_screen():
     pygame.display.flip()
 
 def log_event(history, event, log_time):
-    history.pop()
+    history.pop();
     history.insert(0, '{}  {}'.format(event, int(log_time)))
 
 def event_loop():
-    global updated
     while True:
-        if updated:
-            update_screen()
-            updated = False
-
         for event in pygame.event.get():
             if(event.type is MOUSEBUTTONUP):           
                 pos = pygame.mouse.get_pos() 
 
                 if pos[0] > stopCircle['pos'][0] - stopCircle['r'] and pos[0] < stopCircle['pos'][0] + stopCircle['r']:
                     if pos[1] > stopCircle['pos'][1] - stopCircle['r'] and pos[1] < stopCircle['pos'][1] + stopCircle['r']:
-                        button_cb(100)
+                        button_cb(22)
+                        button_cb(19)
                 elif pos[0] > labels[0]['pos'][0] - 30 and pos[0] < labels[0]['pos'][0] + 30:
                     if pos[1] > labels[0]['pos'][1] - 10 and pos[1] < labels[0]['pos'][1] + 10:
                         return
 
+            update_screen()
+if __name__ == "__main__":
+    for pin in [17, 22, 23, 27, 19, 26]:
+        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_cb, bouncetime=300)
 
-for pin in [17, 22, 23, 27, 19, 26]:
-    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_cb, bouncetime=300)
+    start_time = time.time()
+    update_screen()
+    event_loop()
 
-start_time = time.time()
-event_loop()
+    l_motor.stop()
+    r_motor.stop()
+    _quit()
 
-l_motor.stop()
-r_motor.stop()
-_quit()
 

@@ -65,13 +65,12 @@ L_history = {'Left History':(20, 10), 'Right History':(20,300)}
 
 screen.fill(BLACK)               # Erase the Work space     
 
-pygame.draw.circle(screen, (1,0,0), (circlex,circley), radius,0)
+pygame.draw.circle(screen, (1,1,0), (circlex,circley), radius,0)
 
 for my_text, text_pos in my_buttons.items():    
     text_surface = my_font.render(my_text, True, WHITE)
     rect = text_surface.get_rect(center=text_pos)
     #draw a circle
-    pygame.draw.circle(screen,(1,0,0), (circlex, circley),radius, 0)
     screen.blit(text_surface, rect)
     pygame.display.flip()
 
@@ -115,7 +114,4 @@ while run:
                  #       rect = text_surface.get_rect(center=text_pos)
                  #       screen.blit(text_surface, rect)
 
-
 GPIO.cleanup()
-
-
