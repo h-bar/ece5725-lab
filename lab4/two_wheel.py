@@ -18,8 +18,9 @@ def quit_cb(channel):
 def quit_sig(signal_received, frame):
     _quit()
 
-GPIO.add_event_detect(quit_button, GPIO.FALLING, callback=quit_cb, bouncetime=300)
+# GPIO.add_event_detect(quit_button, GPIO.FALLING, callback=quit_cb, bouncetime=300)
 signal(SIGINT, quit_sig)
+
 
 # Actual code starts from here
 import time
@@ -30,6 +31,15 @@ interval = 0.02
 motor_stop = 0.0015
 motor_r_max = 0.0017
 motor_f_max = 0.0013
+
+
+def initMotor(pwm_pin):
+    GPIO.setup(pwm_pin, GPIO.OUT)
+    motor = GPIO.PWM(pwm_pin, 60)
+    startMotor(motor)
+    setPMotor(motor, motor_stop)
+
+    return motor
 
 def setMotor(pwm, high, low):
     f = 1 / (high + low)
@@ -47,30 +57,43 @@ def startMotor(pwm):
     pwm.ChangeFrequency(1 / interval)
     pwm.start(motor_stop / (motor_stop + interval) * 100)
 
-def setMotorTo(pwm, option):
-    if option == 'f':
+def cmdMotor(pwm, cmd):
+    if cmd == 'f':
         setPMotor(pwm, motor_f_max)
-    elif option == 'r':
+    elif cmd == 'r':
         setPMotor(pwm, motor_r_max)
-    elif option == 'i':
-        setPmotor(pwm, motor_stop)
+    elif cmd == 'i':
+        setPMotor(pwm, motor_stop)
+
 
 if len(sys.argv) > 1:
     frequency = int(sys.argv[1])
 
-leftM_pin = 5
-rightM_pin = 6
 
-GPIO.setup(leftM_pin, GPIO.OUT)
-GPIO.setup(rightM_pin, GPIO.OUT)
+l_motor = initMotor(5)
+r_motor = initMotor(6)
 
-leftM = GPIO.PWM(leftM_pin, 60)
-rightM = GPIO.PWM(rightM_pin, 60)
+def button_cb(channel):
+    if channel == 17:
+        cmdMotor(l_motor, 'f')
+    elif channel == 22:
+        cmdMotor(l_motor, 'i')
+    elif channel == 23:
+        cmdMotor(l_motor, 'r')
+    elif channel == 27:
+        cmdMotor(r_motor, 'f')
+    elif channel == 19:
+        cmdMotor(r_motor, 'i')
+    elif channel == 26:
+        cmdMotor(r_motor, 'r')
 
-startMotor(leftM)
-startMotor(rightM)
+for pin in [17, 22, 23, 27, 19, 26]:
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_cb, bouncetime=300)
 
-raw_input("Press Enter to Stop\n")
 
-motor.stop()
+raw_input()
+
+l_motor.stop()
+r_motor.stop()
 _quit()
