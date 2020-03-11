@@ -40,15 +40,6 @@ motor_stop = 0.0015
 motor_r_max = 0.0017
 motor_f_max = 0.0013
 
-
-def initMotor(pwm_pin):
-    GPIO.setup(pwm_pin, GPIO.OUT)
-    motor = GPIO.PWM(pwm_pin, 60)
-    startMotor(motor)
-    setPMotor(motor, motor_stop)
-
-    return motor
-
 def setMotor(pwm, high, low):
     f = 1 / (high + low)
     pw = high
@@ -71,6 +62,20 @@ def cmdMotor(pwm, cmd):
         setPMotor(pwm, motor_r_max)
     elif cmd == 'i':
         setPMotor(pwm, motor_stop)
+    elif cmd == 's':
+        setPMotor(pwm, 0)
+    elif cmd == 'hf':
+        setPMotor(pwm, (motor_stop - motor_f_max) / 2 + motor_stop)
+    elif cmd == 'hr':
+        setPMotor(pwm, (motor_r_max - motor_stop) / 2 + motor_stop)
+
+def initMotor(pwm_pin):
+    GPIO.setup(pwm_pin, GPIO.OUT)
+    motor = GPIO.PWM(pwm_pin, 60)
+    startMotor(motor)
+    cmdMotor(motor, 's')
+
+    return motor
 
 WHITE = 255, 255, 255
 BLACK = 0,0,0
@@ -99,14 +104,14 @@ labels = [
         'font': pygame.font.Font(None, 30)
     },
     {
-        'text': 'STOP',
+        'text': 'START',
         'pos': (160, 130),
         'font': pygame.font.Font(None, 30)
     }
 ]
 
 stopCircle = {
-    'color': RED,
+    'color': GREEN,
     'pos': (160, 130),
     'r': 40
 }
@@ -116,9 +121,9 @@ stopCircle = {
 l_history = ['', '', '']
 r_history = ['', '', '']
 
-s_stoped = False
-last_l = 'i'
-last_r = 'i'
+s_stoped = True
+last_l = 's'
+last_r = 's'
 
 l_motor = initMotor(5)
 r_motor = initMotor(6)
@@ -129,7 +134,6 @@ def button_cb(channel):
     global last_l
     global last_r
     global s_stoped
-    global updated
     global l_history
     global r_history
     global stopCircle
@@ -162,8 +166,8 @@ def button_cb(channel):
         cmdMotor(r_motor, 'r')
     elif channel == 100:
         if s_stoped:
-            log_event(l_history, 'S Resume', log_time)
-            log_event(r_history, 'S Resume', log_time)
+            log_event(l_history, 'S Start', log_time)
+            log_event(r_history, 'S Start', log_time)
 
             cmdMotor(l_motor, last_l)
             cmdMotor(r_motor, last_r)
@@ -171,13 +175,14 @@ def button_cb(channel):
             labels[-1]['text'] = 'STOP'
             stopCircle['color'] = RED
         else:
-	    setPMotor(l_motor, 0)
-	    setPMotor(r_motor, 0)
-	    s_stoped = True
-	    labels[-1]['text'] = 'RESUME'
-	    stopCircle['color'] = GREEN
+            log_event(l_history, 'S Stop', log_time)
+            log_event(r_history, 'S Stop', log_time)
 
-    updated = True
+            cmdMotor(l_motor, 's')
+            cmdMotor(r_motor, 's')
+            s_stoped = True
+            labels[-1]['text'] = 'RESUME'
+            stopCircle['color'] = GREEN
 
 def gen_history_label(side, history):
     pos_x = 60 if side == 'l' else 260
@@ -221,11 +226,56 @@ def update_screen():
     pygame.display.flip()
 
 def log_event(history, event, log_time):
+    global updated
+
     history.pop()
     history.insert(0, '{}  {}'.format(event, int(log_time)))
+    updated = True
+
+def forwardC():
+    log_time = time.time - start_time
+    cmdMotor(l_motor, 'hf')
+    cmdMotor(l_motor, 'hr')
+    log_event(l_history, "Forward", log_time)
+    log_event(r_history, "Forward", log_time)
+
+
+def backwardC():
+    log_time = time.time - start_time
+    cmdMotor(l_motor, 'hr')
+    cmdMotor(l_motor, 'hf')
+    log_event(l_history, "Backard", log_time)
+    log_event(r_history, "Backard", log_time)
+
+def pivotLC():
+    log_time = time.time - start_time
+    cmdMotor(l_motor, 'hf')
+    cmdMotor(l_motor, 'hf')
+    log_event(l_history, "Pivot L", log_time)
+    log_event(r_history, "Pivot L", log_time)
+
+def pivotRC():
+    log_time = time.time - start_time
+    cmdMotor(l_motor, 'hr')
+    cmdMotor(l_motor, 'hr')
+    log_event(l_history, "Pivot R", log_time)
+    log_event(r_history, "Pivot R", log_time)
+
+def stopC():
+    log_time = time.time - start_time
+    cmdMotor(l_motor, 's')
+    cmdMotor(l_motor, 's')
+    log_event(l_history, "Stop", log_time)
+    log_event(r_history, "Stop", log_time)
+
+
 
 def event_loop():
     global updated
+    section = 0
+
+    n_time = time.time()
+
     while True:
         if updated:
             update_screen()
@@ -241,6 +291,45 @@ def event_loop():
                 elif pos[0] > labels[0]['pos'][0] - 30 and pos[0] < labels[0]['pos'][0] + 30:
                     if pos[1] > labels[0]['pos'][1] - 10 and pos[1] < labels[0]['pos'][1] + 10:
                         return
+
+        if section == -1 and s_stoped:
+            pass
+        elif section == 0:
+            forwardC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 1:
+            stopC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 2:
+            backwardC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 3:
+            stopC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 4:
+            pivotLC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 5:
+            pivotRC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 5
+        elif section == 6:
+            stopC()
+            section = -1
+        
+        if section != -1 and time.time() - n_time > timer_th :
+            section += 0.5
 
 
 for pin in [17, 22, 23, 27, 19, 26]:
