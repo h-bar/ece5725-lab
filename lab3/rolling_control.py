@@ -29,8 +29,8 @@ import pygame
 from pygame.locals import *
 import os
 
-os.putenv('SDL_VIDEODRIVER', 'fbcon')   # Display on piTFT#   
-os.putenv('SDL_FBDEV', '/dev/fb1')     
+os.putenv('SDL_VIDEODRIVER', 'fbcon')   # Display on piTFT#
+os.putenv('SDL_FBDEV', '/dev/fb1')
 os.putenv('SDL_MOUSEDRV', 'TSLIB')     # Track mouse clicks on piTFT
 os.putenv('SDL_MOUSEDEV', '/dev/input/touchscreen')
 
@@ -53,8 +53,7 @@ def setMotor(pwm, high, low):
     f = 1 / (high + low)
     pw = high
     dc = high / (high + low) * 100
-    print "Setting Motor -> F: {}\tPW: {}\tDC: {}".format(f, pw, dc)  
-    
+    print "Setting Motor -> F: {}\tPW: {}\tDC: {}".format(f, pw, dc)
     pwm.ChangeFrequency(f)
     pwm.ChangeDutyCycle(dc)
 
@@ -142,42 +141,42 @@ def button_cb(channel):
         last_l = 'f'
         cmdMotor(l_motor, 'f')
     elif channel == 22:
-        log_event(l_history, 'Stop', log_time) 
+        log_event(l_history, 'Stop', log_time)
         last_l = 'i'
         cmdMotor(l_motor, 'i')
     elif channel == 23:
-        log_event(l_history, 'Counter-Clk', log_time) 
+        log_event(l_history, 'Counter-Clk', log_time)
         last_l = 'r'
         cmdMotor(l_motor, 'r')
     elif channel == 27:
-        log_event(r_history, 'Clk', log_time) 
+        log_event(r_history, 'Clk', log_time)
         last_r = 'f'
         cmdMotor(r_motor, 'f')
     elif channel == 19:
-        log_event(r_history, 'Stop', log_time) 
+        log_event(r_history, 'Stop', log_time)
         last_r = 'i'
         cmdMotor(r_motor, 'i')
     elif channel == 26:
-        log_event(r_history, 'Counter-Clk', log_time) 
+        log_event(r_history, 'Counter-Clk', log_time)
         last_r = 'r'
         cmdMotor(r_motor, 'r')
     elif channel == 100:
          if s_stoped:
             log_event(l_history, 'S Resume', log_time)
             log_event(r_history, 'S Resume', log_time)
-       
+
             cmdMotor(l_motor, last_l)
             cmdMotor(r_motor, last_r)
             s_stoped = False
             labels[-1]['text'] = 'STOP'
             stopCircle['color'] = RED
         else:
-            setPMotor(l_motor, 0)
-            setPMotor(r_motor, 0)
-            s_stoped = True
-            labels[-1]['text'] = 'RESUME'
-            stopCircle['color'] = GREEN
-    
+		setPMotor(l_motor, 0)
+		setPMotor(r_motor, 0)
+		s_stoped = True
+		labels[-1]['text'] = 'RESUME'
+		stopCircle['color'] = GREEN
+
     updated = True
 
 def gen_history_label(side, history):
@@ -207,18 +206,18 @@ def gen_history_label(side, history):
 
 def render_lables(screen, labels):
     for label in labels:
-        label_surface = label['font'].render(label['text'], True, WHITE)    
+        label_surface = label['font'].render(label['text'], True, WHITE)
         rect = label_surface.get_rect(center=label['pos'])
         screen.blit(label_surface, rect)
 
 def update_screen():
     screen.fill(BLACK)
     pygame.draw.circle(screen, stopCircle['color'], stopCircle['pos'], stopCircle['r'])
-    
+
     render_lables(screen, labels)
     render_lables(screen, gen_history_label('l', l_history))
     render_lables(screen,  gen_history_label('r', r_history))
-    
+
     pygame.display.flip()
 
 def log_event(history, event, log_time):
@@ -233,8 +232,8 @@ def event_loop():
             updated = False
 
         for event in pygame.event.get():
-            if(event.type is MOUSEBUTTONUP):           
-                pos = pygame.mouse.get_pos() 
+            if(event.type is MOUSEBUTTONUP):
+                pos = pygame.mouse.get_pos()
 
                 if pos[0] > stopCircle['pos'][0] - stopCircle['r'] and pos[0] < stopCircle['pos'][0] + stopCircle['r']:
                     if pos[1] > stopCircle['pos'][1] - stopCircle['r'] and pos[1] < stopCircle['pos'][1] + stopCircle['r']:
