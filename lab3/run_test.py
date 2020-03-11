@@ -60,12 +60,10 @@ def cmdMotor(pwm, cmd):
         setPMotor(pwm, motor_f_max)
     elif cmd == 'r':
         setPMotor(pwm, motor_r_max)
-    elif cmd == 'i':
-        setPMotor(pwm, motor_stop)
     elif cmd == 's':
         setPMotor(pwm, 0)
     elif cmd == 'hf':
-        setPMotor(pwm, (motor_stop - motor_f_max) / 2 + motor_stop)
+        setPMotor(pwm, (motor_f_max - motor_stop) / 2 + motor_stop)
     elif cmd == 'hr':
         setPMotor(pwm, (motor_r_max - motor_stop) / 2 + motor_stop)
 
@@ -146,8 +144,8 @@ def button_cb(channel):
         cmdMotor(l_motor, 'f')
     elif channel == 22:
         log_event(l_history, 'Stop', log_time)
-        last_l = 'i'
-        cmdMotor(l_motor, 'i')
+        last_l = 's'
+        cmdMotor(l_motor, 's')
     elif channel == 23:
         log_event(l_history, 'Counter-Clk', log_time)
         last_l = 'r'
@@ -158,8 +156,8 @@ def button_cb(channel):
         cmdMotor(r_motor, 'f')
     elif channel == 19:
         log_event(r_history, 'Stop', log_time)
-        last_r = 'i'
-        cmdMotor(r_motor, 'i')
+        last_r = 's'
+        cmdMotor(r_motor, 's')
     elif channel == 26:
         log_event(r_history, 'Counter-Clk', log_time)
         last_r = 'r'
@@ -233,38 +231,38 @@ def log_event(history, event, log_time):
     updated = True
 
 def forwardC():
-    log_time = time.time - start_time
-    cmdMotor(l_motor, 'hf')
+    log_time = time.time() - start_time
     cmdMotor(l_motor, 'hr')
+    cmdMotor(r_motor, 'hf')
     log_event(l_history, "Forward", log_time)
     log_event(r_history, "Forward", log_time)
 
 
 def backwardC():
-    log_time = time.time - start_time
-    cmdMotor(l_motor, 'hr')
+    log_time = time.time() - start_time
     cmdMotor(l_motor, 'hf')
+    cmdMotor(r_motor, 'hr')
     log_event(l_history, "Backard", log_time)
     log_event(r_history, "Backard", log_time)
 
 def pivotLC():
-    log_time = time.time - start_time
+    log_time = time.time() - start_time
     cmdMotor(l_motor, 'hf')
-    cmdMotor(l_motor, 'hf')
+    cmdMotor(r_motor, 'hf')
     log_event(l_history, "Pivot L", log_time)
     log_event(r_history, "Pivot L", log_time)
 
 def pivotRC():
-    log_time = time.time - start_time
+    log_time = time.time() - start_time
     cmdMotor(l_motor, 'hr')
-    cmdMotor(l_motor, 'hr')
+    cmdMotor(r_motor, 'hr')
     log_event(l_history, "Pivot R", log_time)
     log_event(r_history, "Pivot R", log_time)
 
 def stopC():
-    log_time = time.time - start_time
+    log_time = time.time() - start_time
     cmdMotor(l_motor, 's')
-    cmdMotor(l_motor, 's')
+    cmdMotor(r_motor, 's')
     log_event(l_history, "Stop", log_time)
     log_event(r_history, "Stop", log_time)
 
@@ -275,7 +273,7 @@ def event_loop():
     section = 0
 
     n_time = time.time()
-
+    timer_th = 3
     while True:
         if updated:
             update_screen()
@@ -292,39 +290,44 @@ def event_loop():
                     if pos[1] > labels[0]['pos'][1] - 10 and pos[1] < labels[0]['pos'][1] + 10:
                         return
 
-        if section == -1 and s_stoped:
+        if section == -1 or s_stoped:
             pass
         elif section == 0:
             forwardC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
+            timer_th = 3
         elif section == 1:
             stopC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
+            timer_th = 1
         elif section == 2:
             backwardC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
+            timer_th = 3
         elif section == 3:
             stopC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
+            timer_th = 1
         elif section == 4:
             pivotLC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
+            timer_th = 3
         elif section == 5:
+            stopC()
+            section += 0.5
+            n_time = time.time()
+            timer_th = 1
+        elif section == 6:
             pivotRC()
             section += 0.5
             n_time = time.time()
-            timer_th = 5
-        elif section == 6:
+            timer_th = 3
+        elif section == 7:
             stopC()
             section = -1
         
