@@ -231,38 +231,62 @@ def log_event(history, event, log_time):
     updated = True
 
 def forwardC():
+    global last_l
+    global last_r
     log_time = time.time() - start_time
     cmdMotor(l_motor, 'hr')
     cmdMotor(r_motor, 'hf')
+    last_l = 'hr'
+    last_r = 'hf'
     log_event(l_history, "Forward", log_time)
     log_event(r_history, "Forward", log_time)
 
 
 def backwardC():
+    global last_l
+    global last_r
+
     log_time = time.time() - start_time
     cmdMotor(l_motor, 'hf')
     cmdMotor(r_motor, 'hr')
+    last_l = 'hf'
+    last_r = 'hr'
     log_event(l_history, "Backard", log_time)
     log_event(r_history, "Backard", log_time)
 
 def pivotLC():
+    global last_l
+    global last_r
+
     log_time = time.time() - start_time
     cmdMotor(l_motor, 'hf')
     cmdMotor(r_motor, 'hf')
+    last_l = 'hf'
+    last_r = 'hf'
     log_event(l_history, "Pivot L", log_time)
     log_event(r_history, "Pivot L", log_time)
 
 def pivotRC():
+    global last_l
+    global last_r
+
     log_time = time.time() - start_time
     cmdMotor(l_motor, 'hr')
     cmdMotor(r_motor, 'hr')
+    last_l = 'hr'
+    last_r = 'hr'
     log_event(l_history, "Pivot R", log_time)
     log_event(r_history, "Pivot R", log_time)
 
 def stopC():
+    global last_l
+    global last_r
+
     log_time = time.time() - start_time
     cmdMotor(l_motor, 's')
     cmdMotor(r_motor, 's')
+    last_l = 's'
+    last_r = 's'
     log_event(l_history, "Stop", log_time)
     log_event(r_history, "Stop", log_time)
 
@@ -272,8 +296,10 @@ def event_loop():
     global updated
     section = 0
 
-    n_time = time.time()
-    timer_th = 3
+    timer = 0
+    action_th = 300000
+    stop_th = 100000
+    timer_th = action_th
     while True:
         if updated:
             update_screen()
@@ -295,44 +321,46 @@ def event_loop():
         elif section == 0:
             forwardC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 3
+            timer = 0
+            timer_th = action_th
         elif section == 1:
             stopC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 1
+            timer = 0
+            timer_th = stop_th
         elif section == 2:
             backwardC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 3
+            timer = 0
+            timer_th = action_th
         elif section == 3:
             stopC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 1
+            timer = 0
+            timer_th = stop_th
         elif section == 4:
             pivotLC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 3
+            timer = 0
+            timer_th = action_th
         elif section == 5:
             stopC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 1
+            timer = 0
+            timer_th = stop_th
         elif section == 6:
             pivotRC()
             section += 0.5
-            n_time = time.time()
-            timer_th = 3
+            timer = 0
+            timer_th = action_th
         elif section == 7:
             stopC()
             section = -1
         
-        if section != -1 and time.time() - n_time > timer_th :
-            section += 0.5
+        if not s_stoped and section != -1:
+            timer += 1
+            if timer > timer_th :
+                section += 0.5
 
 
 for pin in [17, 22, 23, 27, 19, 26]:
